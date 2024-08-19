@@ -6,6 +6,7 @@ from glob import glob
 from threading import Thread
 import yaml
 
+
 SERVER_CONFIG = {"protocols": ["tcp"], "paths": {"all": {"source": "publisher"}}}
 BASE_STREAM_URL = "rtsp://localhost:8554/live"
 

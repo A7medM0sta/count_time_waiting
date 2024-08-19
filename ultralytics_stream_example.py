@@ -1,6 +1,5 @@
 import argparse
 from typing import List
-
 import cv2
 import numpy as np
 from inference import InferencePipeline
@@ -8,7 +7,6 @@ from inference.core.interfaces.camera.entities import VideoFrame
 from ultralytics import YOLO
 from utils.general import find_in_list, load_zones_config
 from utils.timers import ClockBasedTimer
-
 import supervision as sv
 
 COLORS = sv.ColorPalette.from_hex(["#E6194B", "#3CB44B", "#FFE119", "#3C76D1"])
