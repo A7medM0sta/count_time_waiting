@@ -1,65 +1,86 @@
-import json
-from typing import Generator, List
-
-import cv2
+from datetime import datetime
+from typing import Dict
 import numpy as np
+import supervision as sv
 
-def load_zones_config(file_path: str) -> List[np.ndarray]:
+
+class FPSBasedTimer:
     """
-    Load polygon zone configurations from a JSON file.
+    A timer that calculates the duration each object has been detected based on frames
+    per second (FPS).
 
-    This function reads a JSON file which contains polygon coordinates, and
-    converts them into a list of NumPy arrays. Each polygon is represented as
-    a NumPy array of coordinates.
-
-    Args:
-        file_path (str): The path to the JSON configuration file.
-
-    Returns:
-        List[np.ndarray]: A list of polygons, each represented as a NumPy array.
+    Attributes:
+        fps (int): The frame rate of the video stream, used to calculate time durations.
+        frame_id (int): The current frame number in the sequence.
+        tracker_id2frame_id (Dict[int, int]): Maps each tracker's ID to the frame number
+            at which it was first detected.
     """
-    with open(file_path, "r") as file:
-        data = json.load(file)
-        return [np.array(polygon, np.int32) for polygon in data]
+
+    def __init__(self, fps: int = 30) -> None:
+        """Initializes the FPSBasedTimer with the specified frames per second rate.
+
+        Args:
+            fps (int, optional): The frame rate of the video stream. Defaults to 30.
+        """
+        self.fps = fps
+        self.frame_id = 0
+        self.tracker_id2frame_id: Dict[int, int] = {}
+
+    def tick(self, detections: sv.Detections) -> np.ndarray:
+        """Processes the current frame, updating time durations for each tracker.
+
+        Args:
+            detections: The detections for the current frame, including tracker IDs.
+
+        Returns:
+            np.ndarray: Time durations (in seconds) for each detected tracker, since
+                their first detection.
+        """
+        self.frame_id += 1
+        times = []
+
+        for tracker_id in detections.tracker_id:
+            self.tracker_id2frame_id.setdefault(tracker_id, self.frame_id)
+
+            start_frame_id = self.tracker_id2frame_id[tracker_id]
+            time_duration = (self.frame_id - start_frame_id) / self.fps
+            times.append(time_duration)
+
+        return np.array(times)
 
 
-def find_in_list(array: np.ndarray, search_list: List[int]) -> np.ndarray:
-    """Determines if elements of a numpy array are present in a list.
-
-    Args:
-        array (np.ndarray): The numpy array of integers to check.
-        search_list (List[int]): The list of integers to search within.
-
-    Returns:
-        np.ndarray: A numpy array of booleans, where each boolean indicates whether
-        the corresponding element in `array` is found in `search_list`.
+class ClockBasedTimer:
     """
-    if not search_list:
-        return np.ones(array.shape, dtype=bool)
-    else:
-        return np.isin(array, search_list)
+    A timer that calculates the duration each object has been detected based on the
+    system clock.
 
-
-def get_stream_frames_generator(rtsp_url: str) -> Generator[np.ndarray, None, None]:
+    Attributes:
+        tracker_id2start_time (Dict[int, datetime]): Maps each tracker's ID to the
+            datetime when it was first detected.
     """
-    Generator function to yield frames from an RTSP stream.
 
-    Args:
-        rtsp_url (str): URL of the RTSP video stream.
+    def __init__(self) -> None:
+        """Initializes the ClockBasedTimer."""
+        self.tracker_id2start_time: Dict[int, datetime] = {}
 
-    Yields:
-        np.ndarray: The next frame from the video stream.
-    """
-    cap = cv2.VideoCapture(rtsp_url)
-    if not cap.isOpened():
-        raise Exception("Error: Could not open video stream.")
+    def tick(self, detections: sv.Detections) -> np.ndarray:
+        """Processes the current frame, updating time durations for each tracker.
 
-    try:
-        while True:
-            ret, frame = cap.read()
-            if not ret:
-                print("End of stream or error reading frame.")
-                break
-            yield frame
-    finally:
-        cap.release()
+        Args:
+            detections: The detections for the current frame, including tracker IDs.
+
+        Returns:
+            np.ndarray: Time durations (in seconds) for each detected tracker, since
+                their first detection.
+        """
+        current_time = datetime.now()
+        times = []
+
+        for tracker_id in detections.tracker_id:
+            self.tracker_id2start_time.setdefault(tracker_id, current_time)
+
+            start_time = self.tracker_id2start_time[tracker_id]
+            time_duration = (current_time - start_time).total_seconds()
+            times.append(time_duration)
+
+        return np.array(times)
