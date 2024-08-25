@@ -8,6 +8,15 @@ Here’s a revised version of the instructions focused solely on video processin
 
 This project demonstrates the use of computer vision techniques to analyze wait times and monitor the duration that objects or individuals spend in predefined zones within video frames. It's ideal for applications like retail analytics or traffic management.
 
+
+## Sample Outputs
+##### Analysis For Customer Waiting Time 
+![Checkout](/assets/market.png)
+
+##### Analysis For Cars Waiting  Time 
+![Checkout](/assets/traffic.png)
+
+
 ## 💻 Installation
 
 ### Step 1: Clone the Repository
