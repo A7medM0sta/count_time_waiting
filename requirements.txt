@@ -3,4 +3,7 @@ supervision>=0.20.0
 ultralytics
 inference
 pytube
-
+yt-dlp
+youtube-dl
+ultralytics
+argparse

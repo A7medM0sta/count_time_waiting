@@ -23,7 +23,7 @@ This project demonstrates the use of computer vision techniques to analyze wait 
 
 ```bash
 git clone https://github.com/A7medM0sta/time_analysis.git  
-cd time_analysis
+cd time_analysis/src
 ```
 
 ### Step 2: Set Up the Python Environment (Optional)
